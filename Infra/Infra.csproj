@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="KueiExtensions" Version="1.0.12" />
+      <PackageReference Include="KueiExtensions.Microsoft.AspNetCore" Version="1.0.4" />
+      <PackageReference Include="KueiExtensions.System.Text.Json" Version="1.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Exceptions" />
+    </ItemGroup>
+
+</Project>

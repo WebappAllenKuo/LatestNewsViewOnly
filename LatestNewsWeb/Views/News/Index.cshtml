@@ -1,0 +1,193 @@
+﻿@{
+    ViewData["Title"] = "最新消息";
+}
+
+<partial name="_VueInitialStyle" />
+<style>
+    fieldset.scheduler-border {
+        border: 1px solid #ddd !important;
+        padding: 0 1.4em 1.4em 1.4em !important;
+        margin: 0 0 1.5em 0 !important;
+        -webkit-box-shadow:  0px 0px 0px 0px #000;
+                box-shadow:  0px 0px 0px 0px #000;
+
+        border-radius: .25rem;
+    }
+
+    legend.scheduler-border {
+        font-size: 1.2em !important;
+        font-weight: bold !important;
+        text-align: left !important;
+        width:auto;
+        padding:0 10px;
+        border-bottom:none;
+    }
+</style>
+<div id="app"
+     v-cloak>
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h3>列表</h3>
+        </div>
+    </div>
+
+    <fieldset class="scheduler-border">
+        <legend class="scheduler-border">搜尋</legend>
+        <form autocomplete="off"
+              class="form-inline control-group"
+              v-on:submit.prevent="form_search">
+
+            <div class="form-group mx-3">
+                <label for="searchTitle">標題</label>
+                <input id="searchTitle"
+                       v-model="search_form.SearchTitle"
+                       placeholder="標題關鍵字"
+                       class="form-control mx-sm-3">
+            </div>
+
+            <div class="form-group mx-3">
+                <button type="submit"
+                        class="btn btn-primary">
+                    搜尋
+                </button>
+            </div>
+        </form>
+    </fieldset>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th style="width: 10%;">項次</th>
+            <th>標題</th>
+            <th style="width: 20%;">發佈日期</th>
+            <th style="width: 20%;"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="item in vue_model.Items"
+            v-bind:key="item?.Guid">
+            <td>
+                {{item.No}}
+            </td>
+            <td>
+                {{item.Title}}
+                <i v-if="item.IsTop"
+                   class="bi bi-arrow-up-square-fill mx-2">
+                </i>
+            </td>
+            <td>
+                {{ item.PublishDateTime }}
+            </td>
+            <td>
+                <button type="submit"
+                        class="btn btn-outline-secondary"
+                        v-on:click="to_detail(item?.Guid)">
+                    詳細資料
+                </button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <pagination v-bind:page_info="vue_model.PageInfo"
+                v-on:to_page="to_page($event)">
+    </pagination>
+</div>
+
+
+@section Scripts
+{
+    <script>
+      const app = createApp({
+        setup(){
+
+          const get_list_url = '@Url.Action("GetList")';
+
+          const detail_url = '@Url.Action("Detail")';
+
+          // 先從 Query String 抓分頁設定，如果沒給，後端會再給定預設值 !
+          const query_string_params = UrlSearchParamsToObject(new URL(window.location.href).searchParams);
+
+          const vue_model = reactive({ PageInfo: {
+              PageNo : query_string_params?.PageNo,
+              OnePageCount : query_string_params?.OnePageCount,
+              SearchFields : {
+                  SearchTitle: query_string_params?.SearchTitle,
+              }
+          }, Items:[]});
+
+          const columns = @Html.Raw(ViewBag.ColumnsJson);
+
+          const to_page = function (page) {
+              vue_model.PageInfo.PageNo = page;
+              get_news_list();
+          }
+
+          const sort_column = function (columnName) {
+
+              vue_model.PageInfo.ClickSortColumn = columnName;
+              get_news_list();
+          }
+
+          const get_news_list_request = new CustomRequest();
+
+          const get_news_list = function() {
+               get_news_list_request.PostJson(get_list_url, vue_model.PageInfo)
+                                    .then(responseBody => {
+
+                                        // console.log(responseBody);
+
+                                        if (responseBody.IsValid) {
+                                            vue_model.Items = responseBody.Dto.Items;
+                                            vue_model.PageInfo = responseBody.Dto.PageInfo;
+
+                                            ApplyObjToQueryString({
+                                                PageNo : vue_model.PageInfo.PageNo,
+                                                OnePageCount : vue_model.PageInfo.OnePageCount,
+                                                SearchTitle : vue_model.PageInfo.SearchFields.SearchTitle,
+                                            });
+
+                                            // 同步回 search form
+                                            search_form.SearchTitle = vue_model.PageInfo.SearchFields.SearchTitle;
+                                        }
+                                    });
+          }
+
+          onMounted(()=>{
+              get_news_list();
+          })
+
+          const to_detail = function(newsGuid) {
+              window.location.href = detail_url + '/' + newsGuid;
+          }
+
+          const search_form = reactive({
+              SearchTitle : '',
+          });
+
+          const form_search = function () {
+              // 套用要搜尋的欄位
+              vue_model.PageInfo.SearchFields.SearchTitle = search_form.SearchTitle;
+
+              get_news_list();
+          }
+
+          return {
+              vue_model,
+              columns,
+              to_page,
+              sort_column,
+              to_detail,
+
+              search_form,
+              form_search,
+          }
+        }
+      });
+
+    </script>
+    <partial name="vue/pagination" />
+    <script>
+        const vm = app.mount('#app');
+    </script>
+}

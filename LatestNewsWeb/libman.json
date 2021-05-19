@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "twitter-bootstrap@4.6.0",
+      "destination": "wwwroot/lib/twitter-bootstrap/4.6.0/"
+    },
+    {
+      "library": "jquery@3.6.0",
+      "destination": "wwwroot/lib/jquery/3.6.0/"
+    },
+    {
+      "library": "vue@3.0.11",
+      "destination": "wwwroot/lib/vue/3.0.11/"
+    },
+    {
+      "library": "tinymce@5.7.1",
+      "destination": "wwwroot/lib/tinymce/5.7.1/"
+    },
+    {
+      "library": "bootstrap-icons@1.4.1",
+      "destination": "wwwroot/lib/bootstrap-icons/1.4.1/"
+    },
+    {
+      "library": "jqueryui@1.12.1",
+      "destination": "wwwroot/lib/jqueryui/1.12.1"
+    }
+  ]
+}

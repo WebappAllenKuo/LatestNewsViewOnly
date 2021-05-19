@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net5.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <PackageReference Include="KueiExtensions.Dapper" Version="1.0.3" />
+      <PackageReference Include="Microsoft.Data.SqlClient" Version="2.1.2" />
+      <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="5.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Infra\Infra.csproj" />
+    </ItemGroup>
+
+</Project>

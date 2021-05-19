@@ -1,0 +1,208 @@
+﻿@{
+    ViewData["Title"] = "最新消息";
+}
+<partial name="_VueInitialStyle"/>
+<div id="app"
+     v-cloak>
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h3>列表</h3>
+        </div>
+    </div>
+    <sort-column-table v-model:columns="columns"
+                       v-model:rows="vue_model.Items"
+                       v-model:page_info="vue_model.PageInfo"
+                       v-on:sort_column="sort_column($event)"
+                       v-on:edit="edit($event)"
+                       v-on:delete="del($event)">
+        <template v-slot:latest_title_column>
+            <button class="btn btn-primary m-1"
+                    v-on:click="create()"
+            >新增</button>
+            <button class="btn btn-primary m-1"
+                    v-on:click="open_sort_dialog()"
+            >排序</button>
+        </template>
+    </sort-column-table>
+    <jquery-ui-dialog v-bind:id="sort_dialog_id"
+                      v-bind:title="'最新消息 排序'"
+                      v-bind:is_open_dialog="is_open_sort_dialog"
+                      v-bind:width="810"
+                      v-bind:height="600"
+                      v-on:close_dialog="close_sort_dialog()">
+        <template v-slot:content>
+            <jquery-ui-drag-drop-dual-sortable v-if="is_open_sort_dialog"
+                                               v-bind:left_title="'一般新聞'"
+                                               v-bind:left_items="sort_news.normal_news"
+                                               v-bind:right_title="'置頂新聞'"
+                                               v-bind:right_items="sort_news.top_news"
+                                               v-on:confirm="confirm_sorted_news($event)"
+                                               v-on:cancel="close_sort_dialog()">
+            </jquery-ui-drag-drop-dual-sortable>
+        </template>
+    </jquery-ui-dialog>
+    <pagination v-bind:page_info="vue_model.PageInfo"
+                v-on:to_page="to_page($event)"></pagination>
+</div>
+
+
+@section Scripts
+{
+    <script>
+      const app = createApp({
+        setup(){
+
+          const create_url = '@Url.Action("Create")';
+
+          const edit_url = '@Url.Action("Edit")';
+
+          const delete_url = '@Url.Action("Delete")';
+
+          const get_list_url = '@Url.Action("GetList")';
+
+          const get_sorted_news_url = '@Url.Action("GetSortedNews")';
+
+          const post_sorted_news_url = '@Url.Action("PostSortedNews")';
+
+          const vue_model = reactive(@Html.Raw(ViewBag.NewsJson));
+
+          const columns = @Html.Raw(ViewBag.ColumnsJson);
+
+          const create = function () {
+              window.location.href = create_url;
+          }
+
+          const edit = function (newsGuid) {
+              window.location.href = edit_url + '/' + newsGuid;
+          }
+
+          const delete_news_request = new CustomRequest();
+
+          const del = function (newsGuid) {
+
+              const news = vue_model.Items.find(n => n.Guid === newsGuid);
+
+              const deleteConfirmResult = confirm("是否刪除新聞:" + news.Title  + " ?");
+
+              if(deleteConfirmResult)
+              {
+                  delete_news_request.PostJson(delete_url, newsGuid)
+                                     .then(responseBody => {
+
+                                         // console.log(responseBody);
+
+                                         if (responseBody.IsValid) {
+                                             get_news_list();
+                                         }
+                                     });
+              }
+          }
+
+          const to_page = function (page) {
+              vue_model.PageInfo.PageNo = page;
+              get_news_list();
+          }
+
+          // 以下是 sort news dialog =====================================================================
+
+          const sort_column = function (columnName) {
+
+              if (columnName)
+              {
+                  vue_model.PageInfo.ClickSortColumn = columnName;
+              }
+
+              get_news_list();
+          }
+
+          const get_news_list_request = new CustomRequest();
+
+          const get_news_list = function() {
+               get_news_list_request.PostJson(get_list_url, vue_model.PageInfo)
+                                    .then(responseBody => {
+
+                                        // console.log(responseBody);
+
+                                        if (responseBody.IsValid) {
+                                            vue_model.Items = responseBody.Dto.Items;
+                                            vue_model.PageInfo = responseBody.Dto.PageInfo;
+                                        }
+                                    });
+          }
+
+          const sort_news = reactive({ normal_news : [], top_news : [] });
+          const is_open_sort_dialog = ref(false);
+          const sort_dialog_id = ref('testDialog');
+
+          const get_sorted_news_request = new CustomRequest();
+          const open_sort_dialog = function () {
+
+               get_sorted_news_request.PostJson(get_sorted_news_url)
+                                      .then(responseBody => {
+
+                                          console.log(responseBody);
+
+                                          if (responseBody.IsValid) {
+                                              sort_news.normal_news = responseBody.Dto.NormalNews;
+                                              sort_news.top_news = responseBody.Dto.TopNews;
+
+                                              is_open_sort_dialog.value = true;
+                                          }
+                                      });
+          }
+
+          const post_sorted_news_request = new CustomRequest();
+          const confirm_sorted_news = function (arg) {
+
+              // console.log(arg);
+
+              post_sorted_news_request.PostJson(post_sorted_news_url, arg)
+                                      .then(responseBody => {
+
+                                          // console.log(responseBody);
+
+                                          if (responseBody.IsValid) {
+                                              sort_news.normal_news = responseBody.NormalNews;
+                                              sort_news.top_news = responseBody.TopNews;
+
+                                              is_open_sort_dialog.value = true;
+
+                                              close_sort_dialog();
+
+                                              get_news_list();
+                                          }
+                                      });
+          }
+          const close_sort_dialog = function () {
+              is_open_sort_dialog.value = false;
+          }
+
+          return {
+            vue_model,
+            create_url,
+            columns,
+            create,
+            edit,
+            del,
+            to_page,
+            sort_column,
+
+            sort_news,
+            is_open_sort_dialog,
+            sort_dialog_id,
+            open_sort_dialog,
+            confirm_sorted_news,
+            close_sort_dialog,
+          }
+        }
+      });
+
+    </script>
+    <partial name="vue/sort-column-table" />
+    <partial name="vue/jquery-ui-dialog" />
+    <partial name="vue/jquery-ui-drag-drop-dual-sortable" />
+    <partial name="vue/pagination" />
+    <script>
+      const vm = app.mount('#app');
+    </script>
+}

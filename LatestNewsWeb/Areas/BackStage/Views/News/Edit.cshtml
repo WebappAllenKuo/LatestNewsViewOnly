@@ -1,0 +1,97 @@
+﻿@model Infra.Models.News.Dto
+@{
+    var isEditMode = Model.Guid != null;
+
+    var actionName = isEditMode ? "編輯" : "新增";
+
+    ViewData["Title"] = $"最新消息 - {actionName}";
+
+}
+<partial name="_VueInitialStyle" />
+<div id="app"
+     v-cloak>
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h3>{{ actionName }}</h3>
+        </div>
+    </div>
+    <form autocomplete="off"
+          v-on:submit.prevent="submit">
+
+        <dynamic-form-controls-edit v-model:dto="vue_model.dto"
+                                    v-bind:validate_result="vue_model.validateResult"
+                                    v-bind:columns="columns"
+                                    v-on:change-upload-files="changeUploadFiles($event)" >
+        </dynamic-form-controls-edit>
+
+        <a class="btn btn-secondary"
+           onclick="window.history.back();"
+           href="#">
+            回上一頁
+        </a>
+
+        <button type="submit"
+                class="btn btn-primary mx-1">
+            送出
+        </button>
+    </form>
+
+</div>
+
+@section Scripts
+{
+    <script>
+      const app = createApp({
+        setup(){
+
+          const vue_model = reactive({
+              dto : @Html.Raw(Model.ToJson()),
+              validateResult : @Html.Raw(ViewBag.ValidateResultJson),
+          });
+
+          const columns = @Html.Raw(ViewBag.ColumnsJson);
+
+          const prev_url = '@Url.Action("Index")';
+
+          const actionName = '@Html.Raw(actionName)';
+
+          const post_url = '@Url.Action("PostEdit")';
+
+          const files = ref([]);
+
+          const changeUploadFiles = function(uploadFiles) {
+              files.value = uploadFiles;
+          }
+
+          const create_request = new CustomRequest();
+
+          const submit = function () {
+               create_request.PostJson(post_url, vue_model.dto, files.value)
+                             .then(responseBody => {
+                                 if (responseBody.IsValid) {
+                                     window.location.href = prev_url;
+                                     return;
+                                 }
+
+                                 console.log(responseBody);
+                                 vue_model.validateResult = responseBody.ValidateResult;
+                             });
+          }
+
+          return {
+            vue_model,
+            post_url,
+            actionName,
+            columns,
+            changeUploadFiles,
+            submit,
+          }
+        }
+      });
+
+    </script>
+    <partial name="vue/dynamic-form-controls-edit" />
+    <script>
+      const vm = app.mount('#app');
+    </script>
+}

@@ -1,0 +1,48 @@
+﻿@model Infra.Models.News.DetailDto
+@{
+    ViewData["Title"] = "最新消息 - 詳細資料";
+}
+<partial name="_VueInitialStyle" />
+<div id="app"
+     v-cloak>
+    <div class="row">
+        <div class="col-auto mr-auto">
+            <h3>詳細資料</h3>
+        </div>
+    </div>
+
+    <dynamic-form-controls-detail v-bind:dto="vue_model"
+                                  v-bind:columns="columns">
+    </dynamic-form-controls-detail>
+
+    <a class="btn btn-secondary"
+       onclick="window.history.back();"
+       href="#">
+        回上一頁
+    </a>
+
+</div>
+
+@section Scripts
+{
+    <script>
+      const app = createApp({
+        setup(){
+
+          const vue_model = reactive(@Html.Raw(Model.ToJson()));
+
+          const columns = @Html.Raw(ViewBag.ColumnsJson);
+
+          return {
+            vue_model,
+            columns,
+          }
+        }
+      });
+
+    </script>
+    <partial name="vue/dynamic-form-controls-detail" />
+    <script>
+      const vm = app.mount('#app');
+    </script>
+}
